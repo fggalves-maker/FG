@@ -20,6 +20,11 @@ centros de custo e cenários Real, orçado, Forecast e Real do ano anterior).
 Linhas com `N1 = 0` (ajustes gerenciais e contrapartidas patrimoniais) ficam fora da DRE; o painel
 informa quantas foram ignoradas.
 
+## DRE Gerencial 2026 (Streamlit)
+
+A pasta [`dre_streamlit/`](dre_streamlit/) tem um painel em Python que reproduz a aba
+*DRE Gerencial 2026* da planilha `.xlsb`, com teste de conciliação. Veja o README de lá.
+
 ## Como rodar
 
 Requer Node.js 20+.
