@@ -4,6 +4,12 @@ Reproduz a aba **DRE Gerencial 2026** do `DRE Gerencial 2026_v7.9.xlsb`: lê a `
 a `Estrutura Máscara DRE` e a `lista` e refaz em Python o cálculo dos `SUMIFS`, sem copiar
 valores da planilha.
 
+**No Windows:** instale o Python (python.org, marcando "Add python.exe to PATH"), copie o
+`DRE Gerencial 2026_*.xlsb` para esta pasta e dê dois cliques em **`abrir_painel.bat`**. Na
+primeira vez ele instala os componentes; depois só abre o painel no navegador.
+
+Pelo terminal:
+
 ```bash
 cd dre_streamlit
 pip install -r requirements.txt
@@ -11,6 +17,8 @@ pip install -r requirements.txt
 streamlit run app.py
 pytest -q          # conciliação com os valores salvos na planilha
 ```
+
+O painel usa a versão mais recente de `DRE Gerencial 2026*.xlsb` que estiver na pasta.
 
 A primeira leitura da BASE (~350 mil linhas) leva cerca de 1 minuto; o resultado fica em
 `.cache/*.parquet` e é refeito sozinho quando o `.xlsb` muda (data ou tamanho). O `.xlsb`, o
@@ -23,6 +31,7 @@ A primeira leitura da BASE (~350 mil linhas) leva cerca de 1 minuto; o resultado
 | `config.py` | todas as regras: colunas da BASE, subtotais, regras por Dono, bases do % vertical, períodos, cores |
 | `leitura.py` | leitura do `.xlsb` (pyxlsb) e cache em parquet |
 | `dre.py` | cálculo: contas → grupos → regras de Dono → subtotais; períodos; %, Δ e %Δ |
+| `abrir_painel.bat` | atalho do Windows: confere Python e planilha, instala o que faltar e abre o painel |
 | `app.py` | interface (filtros EMPRESA, DONO, C.CUSTO, DESP. NÃO OP; mês de corte; períodos) |
 | `tests/test_conciliacao.py` | concilia o painel com a aba da DRE (filtros TODOS) |
 

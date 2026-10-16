@@ -8,7 +8,18 @@ import os
 from pathlib import Path
 
 PASTA = Path(__file__).resolve().parent
-ARQUIVO = Path(os.environ.get("DRE_ARQUIVO", PASTA / "DRE Gerencial 2026_v7.9.xlsb"))
+PADRAO_ARQUIVO = "DRE Gerencial 2026*.xlsb"  # qualquer versão: v7.9, v7.10_otimizado…
+
+
+def _achar_arquivo() -> Path:
+    """DRE_ARQUIVO, se definido; senão a versão mais recente da DRE nesta pasta."""
+    if os.environ.get("DRE_ARQUIVO"):
+        return Path(os.environ["DRE_ARQUIVO"])
+    versoes = sorted(PASTA.glob(PADRAO_ARQUIVO), key=lambda p: p.stat().st_mtime)
+    return versoes[-1] if versoes else PASTA / "DRE Gerencial 2026_v7.9.xlsb"
+
+
+ARQUIVO = _achar_arquivo()
 PASTA_CACHE = PASTA / ".cache"
 
 # ---- BASE_RL_ORÇ (cabeçalho na linha 2) ----
