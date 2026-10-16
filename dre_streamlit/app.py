@@ -94,6 +94,12 @@ with st.sidebar:
         help=f"Padrão vem da planilha ({cfg.ABA_DRE}!{cfg.CELULA_CORTE}).",
     )
     periodos = st.multiselect("Períodos", cfg.PERIODOS, default=cfg.PERIODOS_PADRAO)
+    nivel_max = int(estr["nivel"].max())
+    nivel = st.radio(
+        "Estrutura de tópicos", list(range(1, nivel_max + 1)), index=nivel_max - 1, horizontal=True,
+        format_func=lambda k: "Tudo" if k == nivel_max else str(k),
+        help="Como os botões 1/2/3/4 do agrupamento do Excel: mostra até esse nível; subtotais sempre aparecem.",
+    )
 
 res = dre.calcular(dre.filtrar(base, filtros), estr, filtros["DONO"])
 p_kpi = periodos[-1] if periodos else "ACUMULADO"
@@ -102,6 +108,7 @@ for col, (rotulo, linha) in zip(st.columns(len(cfg.KPIS)), cfg.KPIS):
     col.metric(f"{rotulo} · {p_kpi}", numero(v26), f"{pct(dre.div(v26 - v25, abs(v25)))} vs 2025")
 
 if periodos:
-    st.markdown(tabela(estr, res, periodos, corte, sinais), unsafe_allow_html=True)
+    visiveis = estr[estr["nivel"] <= nivel]
+    st.markdown(tabela(visiveis, res, periodos, corte, sinais), unsafe_allow_html=True)
 else:
     st.info("Escolha ao menos um período na barra lateral.")

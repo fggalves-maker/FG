@@ -49,7 +49,16 @@
   .dre th.d, .dre td.d { position: sticky; left: 0; z-index: 1; text-align: left; }
   .dre th.d { z-index: 3; }
   .dre td { padding: 2px 8px; text-align: right; background: var(--papel); color: #000; font-variant-numeric: tabular-nums; border-bottom: 1px solid #f0efeb; }
-  .dre .cod { color: var(--tinta-2); font-weight: 400; }
+  .dre .cod { color: var(--tinta-2); font-weight: 400; display: inline-block; min-width: 3.4em; }
+  .tg { width: 15px; height: 15px; padding: 0; margin-right: 5px; border: 1px solid var(--borda); border-radius: 2px;
+    background: var(--papel); color: var(--tinta); font: 700 11px/1 var(--fonte); cursor: pointer; vertical-align: -1px; }
+  .tg:hover { background: var(--cabecalho); }
+  .tg:focus-visible, .niveis button:focus-visible { outline: 2px solid var(--acento); outline-offset: 1px; }
+  .tg-esp { display: inline-block; width: 20px; }
+  .niveis { display: flex; flex-wrap: wrap; gap: 4px; }
+  .niveis button { font: 700 12px/1 var(--fonte); min-width: 26px; height: 26px; padding: 0 8px; border: 1px solid var(--borda);
+    border-radius: 3px; background: var(--papel); color: var(--tinta); cursor: pointer; }
+  .niveis button[aria-pressed="true"] { background: var(--cabecalho); border-color: #e9b99c; }
   .dre tr.g td { font-weight: 700; }
   .dre tr.s td { font-weight: 700; background: var(--subtotal); border-top: 1px solid var(--borda); }
   .dre td.neg { color: var(--negativo); }
@@ -67,6 +76,7 @@
   <section class="filtros" aria-label="Filtros">
     <div id="campos" style="display:contents"></div>
     <label>MÊS DE CORTE<select id="corte"></select></label>
+    <label>ESTRUTURA DE TÓPICOS<div class="niveis" id="niveis" role="group" aria-label="Nível de detalhe"></div></label>
     <label style="flex:1 1 100%">PERÍODOS<div class="periodos" id="periodos" role="group" aria-label="Períodos"></div></label>
   </section>
   <section class="kpis" id="kpis" aria-label="Indicadores"></section>
@@ -174,6 +184,49 @@ if (typeof document !== 'undefined') {
     caixaPer.appendChild(b);
   });
 
+  // Estrutura de tópicos (como o agrupamento do Excel): grupos acima de cada linha
+  const pais = [];
+  const comFilhos = new Set();
+  {
+    const pilha = [];
+    D.estrutura.forEach(([l, t, n]) => {
+      if (t === 'Subtotal') pilha.length = 0;
+      while (pilha.length && pilha[pilha.length - 1].n >= n) pilha.pop();
+      pais.push(pilha.map((p) => p.l));
+      if (pilha.length) comFilhos.add(pilha[pilha.length - 1].l);
+      if (t === 'Grupo') pilha.push({ l, n });
+    });
+  }
+  const grupos = D.estrutura.filter(([l]) => comFilhos.has(l));
+  const nivelMax = Math.max(...D.estrutura.map((e) => e[2]));
+  let fechados = new Set();
+  let nivel = nivelMax;
+  const caixaNiveis = document.getElementById('niveis');
+  function marcarNiveis() {
+    caixaNiveis.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', Number(b.dataset.n) === nivel));
+  }
+  for (let k = 1; k <= nivelMax; k++) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.dataset.n = k;
+    b.textContent = k === nivelMax ? 'Tudo' : k;
+    b.title = k === nivelMax ? 'Expandir tudo' : `Mostrar até o nível ${k}`;
+    b.addEventListener('click', () => {
+      nivel = k;
+      fechados = new Set(grupos.filter((g) => g[2] >= k).map((g) => g[0]));
+      marcarNiveis(); render();
+    });
+    caixaNiveis.appendChild(b);
+  }
+  marcarNiveis();
+  document.getElementById('tabela').addEventListener('click', (e) => {
+    const b = e.target.closest('button.tg');
+    if (!b) return;
+    const l = Number(b.dataset.g);
+    if (!fechados.delete(l)) fechados.add(l);
+    nivel = null; marcarNiveis(); render();
+    document.querySelector(`button.tg[data-g="${l}"]`)?.focus();
+  });
+
   function render() {
     const res = CALC.calcular(D, sel);
     const pk = periodos.length ? periodos[periodos.length - 1] : 'ACUMULADO';
@@ -187,10 +240,15 @@ if (typeof document !== 'undefined') {
     const h1 = '<tr><th class="d">DRE - GERENCIAL</th>' + periodos.map((p) => `<th colspan="6" class="sep">${esc(p)}</th>`).join('') + '</tr>';
     const h2 = '<tr class="h2"><th class="d"></th>' + periodos.map((p) =>
       `<th class="sep">${p === 'TOTAL' ? 'R26+R25' : 'R 2026'}</th><th>%</th><th>R 2025</th><th>%</th><th>Δ 25</th><th>% 25</th>`).join('') + '</tr>';
-    const corpo = D.estrutura.map(([l, t, n, nat, cod, desc]) => {
+    const corpo = D.estrutura.map(([l, t, n, nat, cod, desc], i) => {
+      if (pais[i].some((p) => fechados.has(p))) return '';
       const cls = t === 'Subtotal' ? 's' : t === 'Grupo' ? 'g' : '';
       const recuo = '&nbsp;'.repeat(3 * Math.max(n - 1, 0));
-      let tds = `<td class="d"><span class="cod">${esc(cod)}</span>${cod ? '&nbsp;&nbsp;' : ''}${recuo}${esc(desc)}</td>`;
+      const aberto = !fechados.has(l);
+      const botao = comFilhos.has(l)
+        ? `<button type="button" class="tg" data-g="${l}" aria-expanded="${aberto}" aria-label="${aberto ? 'Recolher' : 'Expandir'} ${esc(desc)}">${aberto ? '−' : '+'}</button>`
+        : '<span class="tg-esp"></span>';
+      let tds = `<td class="d"><span class="cod">${esc(cod)}</span>${recuo}${botao}${esc(desc)}</td>`;
       for (const p of periodos) {
         if (res.emBranco.has(l)) { tds += '<td class="sep"></td>' + '<td></td>'.repeat(5); continue; }
         const c = CALC.celulas(D, res, l, nat, p, corte);
