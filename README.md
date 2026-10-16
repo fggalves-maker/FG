@@ -1,18 +1,24 @@
 # FG · Dashboard Financeiro
 
-Dashboard financeiro empresarial que roda 100% no navegador: importe uma planilha
-(CSV ou Excel) com seus lançamentos e veja indicadores, gráficos e a lista de
-lançamentos. Nenhum dado sai do seu computador.
+Painel de resultado Real × Orçado que roda 100% no navegador: carregue a base da DRE
+gerencial e veja indicadores, DRE e desvios. Nenhum dado sai do seu computador.
 
 ## O que mostra
 
-- **Indicadores:** resultado, receitas, despesas, margem, contas a receber e a pagar
-  (com variação vs. mês anterior quando um único mês está selecionado)
-- **Receitas e despesas por mês**
-- **Fluxo de caixa acumulado**
-- **Despesas por categoria**
-- **Tabela de lançamentos** com filtro por tipo
-- Filtro de período (de/até), tema claro e escuro automático, layout para celular
+Painel **Real × Orçado** feito para a base `BASE_RL_ORÇ.xlsx` (DRE gerencial com níveis N1–N5,
+centros de custo e cenários Real, orçado, Forecast e Real do ano anterior).
+
+- **Indicadores:** receita líquida, lucro bruto, EBITDA e lucro líquido, com desvio vs. o cenário
+  de comparação e margem sobre a receita líquida
+- **Receita líquida e EBITDA por mês:** barras do Real e linha da comparação
+- **DRE gerencial** em cascata (receita bruta → receita líquida → lucro bruto → EBITDA → EBIT →
+  LAIR → lucro líquido), com abertura por N3 e N4
+- **Maiores desvios por conta (N4)** e **custos e despesas por centro de custo**
+- Filtros: cenário de comparação (Orçado, Forecast ou Ano anterior), meses, empresa e centro de custo
+- Tema claro e escuro automático, layout para celular
+
+Linhas com `N1 = 0` (ajustes gerenciais e contrapartidas patrimoniais) ficam fora da DRE; o painel
+informa quantas foram ignoradas.
 
 ## Como rodar
 
@@ -21,40 +27,54 @@ Requer Node.js 20+.
 ```bash
 npm install
 npm run dev        # abre em http://localhost:5173
-npm test           # testes da importação e dos cálculos
+npm test           # testes da importação e da DRE
 npm run build      # gera a versão de produção em dist/
 ```
 
 A pasta `dist/` é estática: pode ser publicada no GitHub Pages, Netlify, Vercel etc.
 
-## Formato da planilha
+## Usando a base real
 
-Primeira linha = cabeçalho. Ordem das colunas não importa; acentos e maiúsculas são ignorados.
+A base completa tem centenas de milhares de lançamentos (o `.xlsx` tem ~65 MB), pesada demais para
+abrir no navegador. Primeiro resuma com o script (requer Python 3 e `openpyxl`):
 
-| Coluna | Obrigatória | Aceita |
-|---|---|---|
-| `data` | sim | `dd/mm/aaaa`, `aaaa-mm-dd` ou data do Excel |
-| `valor` | sim | `1.234,56`, `1234.56`, `R$ 1.234,56`, `-500,00`, `(500,00)` |
-| `tipo` | não | `receita`/`entrada`/`crédito` ou `despesa`/`saída`/`débito`. Sem a coluna, valor negativo = despesa |
-| `descricao` | não | texto livre (também aceita `histórico`) |
-| `categoria` | não | texto livre (também aceita `conta`, `plano de contas`) |
-| `status` | não | `pago` (padrão) ou `pendente`/`em aberto`/`a pagar`/`a receber` |
+```bash
+pip install openpyxl
+python scripts/preparar_base.py BASE_RL_ORÇ.xlsx public/base.csv
+```
 
-CSV pode usar `;` ou `,` como separador. Veja um exemplo completo em
-[`public/exemplo.csv`](public/exemplo.csv).
+O resultado (~1 MB) soma o `Movimento` por cenário, mês, empresa, centro de custo, dono e N1–N4.
+Com `public/base.csv` presente, `npm run dev` abre direto nele; também dá para escolher o arquivo
+pelo botão **Importar base**. `public/base*.csv` e `*.xlsx` estão no `.gitignore` para os dados da
+empresa não irem para o repositório (que é público). Sem a base, o painel abre com dados fictícios
+de [`public/exemplo.csv`](public/exemplo.csv).
 
-Linhas com data ou valor inválidos são ignoradas e listadas num aviso no topo.
+### Colunas usadas
+
+Os nomes são os da base original (acentos e maiúsculas são ignorados); o cabeçalho pode estar em
+qualquer uma das 20 primeiras linhas.
+
+| Coluna | Uso |
+|---|---|
+| `Real / Orçado` | cenário: `Real`, `orçado`, `Forecast`, `Real 2025` (= ano anterior) |
+| `Mês` | 1–12 (sem ela, usa o mês de `Data`) |
+| `Movimento` | valor com sinal: receitas positivas, custos e despesas negativos |
+| `N1` … `N4` | plano gerencial; N1 define a linha da DRE |
+| `Empresa`, `Descrição C.C`, `Dono C.C` | filtros e gráfico por centro de custo |
+
+Grafias diferentes da mesma empresa (`Conectar`/`CONECTAR`) são unificadas.
 
 ## Estrutura
 
 ```
 src/
   App.tsx                     tela principal, filtros e importação
-  components/                 cartões de indicador, gráficos, tabela
-  lib/parse.ts                leitura de CSV/XLSX e normalização dos lançamentos
-  lib/aggregate.ts            cálculos (por mês, KPIs, por categoria)
+  components/                 cartões de indicador, gráficos, tabela da DRE
+  lib/parse.ts                leitura de CSV/XLSX e normalização da base
+  lib/dre.ts                  DRE em cascata, séries mensais, desvios, centros de custo
   lib/format.ts               formatação pt-BR (moeda, %, meses)
-public/exemplo.csv            dados de exemplo carregados ao abrir
+scripts/preparar_base.py      resume o BASE_RL_ORÇ.xlsx em public/base.csv
+public/exemplo.csv            dados fictícios carregados quando não há base
 ```
 
 Tecnologias: React + TypeScript + Vite, gráficos com Recharts, CSV com PapaParse,

@@ -1,33 +1,33 @@
-import { percentualComSinal } from '../lib/format'
+import { variacao } from '../lib/dre'
+import { moeda, percentual, percentualComSinal } from '../lib/format'
 
 interface Props {
   rotulo: string
-  valor: string
-  /** Variação relativa vs. período anterior. */
-  delta?: number | null
-  /** Se subir é bom (receita) ou ruim (despesa). */
-  subirEhBom?: boolean
+  real: number
+  comp: number
+  rotuloComp: string
+  /** Base para a margem (receita líquida), quando faz sentido mostrar. */
+  base?: number
   heroi?: boolean
-  nota?: string
 }
 
-export function KpiCard({ rotulo, valor, delta, subirEhBom = true, heroi, nota }: Props) {
-  const temDelta = delta != null && Number.isFinite(delta)
-  const bom = temDelta && (delta! === 0 ? null : (delta! > 0) === subirEhBom)
+/** Valores com sinal: Real acima da comparação é sempre favorável. */
+export function KpiCard({ rotulo, real, comp, rotuloComp, base, heroi }: Props) {
+  const delta = variacao(real, comp)
+  const sinal = real - comp
   return (
     <div className={`cartao${heroi ? ' kpi-heroi' : ''}`}>
       <div className="kpi-rotulo">{rotulo}</div>
-      <div className="kpi-valor">{valor}</div>
-      {temDelta ? (
-        <div className="kpi-delta">
-          <span className={bom == null ? '' : bom ? 'bom' : 'ruim'}>
-            {delta! > 0 ? '▲' : delta! < 0 ? '▼' : '•'} {percentualComSinal(delta!)}
+      <div className="kpi-valor">{moeda(real)}</div>
+      <div className="kpi-delta">
+        {delta != null && (
+          <span className={sinal > 0 ? 'bom' : sinal < 0 ? 'ruim' : ''}>
+            {sinal > 0 ? '▲' : sinal < 0 ? '▼' : '•'} {percentualComSinal(delta)}
           </span>
-          <span>vs. mês anterior</span>
-        </div>
-      ) : nota ? (
-        <div className="kpi-delta">{nota}</div>
-      ) : null}
+        )}
+        <span>vs. {rotuloComp} {moeda(comp)}</span>
+      </div>
+      {base ? <div className="kpi-delta">Margem {percentual(real / base)}</div> : null}
     </div>
   )
 }

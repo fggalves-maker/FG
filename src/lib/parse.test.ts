@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { linhasParaLancamentos, parseData, parseValor } from './parse'
-import { kpis, porMes } from './aggregate'
+import { linhasParaFatos, parseCenario, parseValor } from './parse'
+import { maioresDesvios, montarDre, subtotal, subtotalPorMes } from './dre'
 
 describe('parseValor', () => {
   it.each([
@@ -10,42 +10,68 @@ describe('parseValor', () => {
   it('rejeita texto', () => expect(parseValor('abc')).toBeNull())
 })
 
-describe('parseData', () => {
-  it('dd/mm/aaaa', () => expect(parseData('05/03/2026')).toEqual(new Date(2026, 2, 5)))
-  it('aaaa-mm-dd', () => expect(parseData('2026-03-05')).toEqual(new Date(2026, 2, 5)))
-  it('rejeita data impossível', () => expect(parseData('31/02/2026')).toBeNull())
+describe('parseCenario', () => {
+  it.each([
+    ['Real', 'real'], ['orçado', 'orcado'], ['Forecast', 'forecast'], ['forecast', 'forecast'], ['Real 2025', 'anterior'],
+  ])('%s → %s', (entrada, esperado) => expect(parseCenario(entrada)).toBe(esperado))
+  it('rejeita desconhecido', () => expect(parseCenario('xyz')).toBeNull())
 })
 
-describe('linhasParaLancamentos', () => {
-  it('reconhece cabeçalhos com acento e infere tipo pelo sinal', () => {
-    const { lancamentos, erros } = linhasParaLancamentos([
-      ['Data', 'Descrição', 'Categoria', 'Valor'],
-      ['01/01/2026', 'Venda', 'Vendas', '1.000,00'],
-      ['02/01/2026', 'Aluguel', 'Ocupação', '-400,00'],
-      ['xx', 'Ruim', '', '1'],
+const CAB = ['Real / Orçado', 'Mês', 'Data', 'Empresa', 'Descrição C.C', 'Dono C.C', 'N1', 'N2', 'N3', 'N4', 'Movimento']
+
+describe('linhasParaFatos', () => {
+  it('acha o cabeçalho abaixo da 1ª linha, ignora N1 = 0 e padroniza empresa', () => {
+    const r = linhasParaFatos([
+      ['◄ Voltar para CAPA', null, null, null, 123],
+      CAB,
+      ['Real', 2, null, 'Stin Pharma', 'Vendas', 'Ana', 'VENDAS', 'VENDAS', 'VENDAS', 'Vendas', 1000],
+      ['Real', null, new Date(2026, 2, 5), 'STIN PHARMA', 'Vendas', 'Ana', 'CPV', 'CPV', 'CMV', 'Insumos', -400],
+      ['Real', 1, null, '', '', '', '0', '0', '0', '0', -99],
+      ['Talvez', 1, null, '', '', '', 'CPV', '', '', '', -1],
     ])
-    expect(erros).toHaveLength(1)
-    expect(lancamentos.map((l) => [l.tipo, l.valor])).toEqual([['receita', 1000], ['despesa', 400]])
+    expect(r.ajustesIgnorados).toBe(1)
+    expect(r.erros).toHaveLength(1)
+    expect(r.fatos.map((f) => [f.mes, f.empresa, f.valor])).toEqual([[2, 'STIN PHARMA', 1000], [3, 'STIN PHARMA', -400]])
   })
 
-  it('exige colunas de data e valor', () => {
-    expect(linhasParaLancamentos([['descricao'], ['x']]).erros[0]).toMatch(/data, valor/)
+  it('exige as colunas principais', () => {
+    expect(linhasParaFatos([['data', 'valor'], ['01/01/2026', '1']]).erros[0]).toMatch(/Movimento/)
   })
 })
 
-describe('agregação', () => {
-  const { lancamentos } = linhasParaLancamentos([
-    ['data', 'tipo', 'valor', 'status'],
-    ['10/01/2026', 'receita', '1000', 'pago'],
-    ['15/01/2026', 'despesa', '300', 'pendente'],
-    ['10/02/2026', 'receita', '500', 'pendente'],
-    ['20/02/2026', 'despesa', '700', 'pago'],
+describe('DRE', () => {
+  const { fatos } = linhasParaFatos([
+    CAB,
+    ['Real', 1, null, 'A', 'X', '', 'VENDAS', '', '', 'Vendas', 1000],
+    ['Real', 1, null, 'A', 'X', '', 'IMPOSTOS S/VENDA', '', '', 'ICMS', -100],
+    ['Real', 1, null, 'A', 'X', '', 'CPV', '', '', 'Insumos', -400],
+    ['Real', 2, null, 'A', 'X', '', 'DESPESAS OPERACIONAIS', '', '', 'Aluguel', -200],
+    ['Real', 2, null, 'A', 'X', '', 'IRPJ/CSLL', '', '', 'IR', -50],
+    ['orçado', 1, null, 'A', 'X', '', 'VENDAS', '', '', 'Vendas', 1200],
+    ['orçado', 1, null, 'A', 'X', '', 'CPV', '', '', 'Insumos', -300],
+    ['forecast', 1, null, 'A', 'X', '', 'VENDAS', '', '', 'Vendas', 9999],
   ])
-  it('agrupa por mês com saldo acumulado', () => {
-    expect(porMes(lancamentos).map((m) => [m.chave, m.resultado, m.saldoAcumulado]))
-      .toEqual([['2026-01', 700, 700], ['2026-02', -200, 500]])
+  const dre = montarDre(fatos, 'orcado')
+
+  it('calcula subtotais em cascata', () => {
+    expect(subtotal(dre, 'Receita líquida')).toMatchObject({ real: 900, comp: 1200 })
+    expect(subtotal(dre, 'Lucro bruto')).toMatchObject({ real: 500, comp: 900 })
+    expect(subtotal(dre, 'EBITDA')).toMatchObject({ real: 300, comp: 900 })
+    expect(subtotal(dre, 'Lucro líquido')).toMatchObject({ real: 250, comp: 900 })
   })
-  it('calcula KPIs', () => {
-    expect(kpis(lancamentos)).toEqual({ receitas: 1500, despesas: 1000, resultado: 500, margem: 1 / 3, aReceber: 500, aPagar: 300 })
+
+  it('mantém a ordem da DRE', () => {
+    expect(dre.map((l) => l.rotulo).slice(0, 5))
+      .toEqual(['Receita bruta', '(−) Impostos sobre vendas', 'Receita líquida', '(−) CPV', 'Lucro bruto'])
+  })
+
+  it('separa por mês e marca meses sem dado', () => {
+    expect(subtotalPorMes(fatos, 'orcado', 'Receita líquida', [1, 2, 3]))
+      .toEqual([{ mes: 1, real: 900, comp: 1200 }, { mes: 2, real: 0, comp: null }, { mes: 3, real: null, comp: null }])
+  })
+
+  it('ordena desvios pelo tamanho', () => {
+    expect(maioresDesvios(fatos, 'orcado').map((d) => [d.nome, d.desvio]))
+      .toEqual([['Vendas', -200], ['Aluguel', -200], ['ICMS', -100], ['Insumos', -100], ['IR', -50]])
   })
 })
