@@ -1,0 +1,212 @@
+<title>DRE Gerencial 2026</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Planilha em tela: barra de filtros no topo, KPIs, tabela larga com rolagem própria.
+     Visual do Excel de propósito (fundo branco, cabeçalho salmão), por isso um tema só. */
+  :root {
+    color-scheme: light;
+    --fundo: #f3f3f1;
+    --papel: #ffffff;
+    --tinta: #1b1b1a;
+    --tinta-2: #55544f;
+    --linha: #dddcd7;
+    --cabecalho: #FCE4D6;
+    --negativo: #FF0000;
+    --percentual: #4A90E2;
+    --subtotal: #F2F2F2;
+    --borda: #999999;
+    --bom: #0a7a2f;
+    --ruim: #c62828;
+    --acento: #c2562b;
+    --fonte: Calibri, Carlito, "Segoe UI", Arial, sans-serif;
+  }
+  body { background: var(--fundo); color: var(--tinta); font-family: var(--fonte); }
+  .app { max-width: 1600px; margin: 0 auto; padding-block: 20px 40px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: grid; gap: 14px; }
+  header h1 { margin: 0; font-size: 24px; font-weight: 700; text-wrap: balance; }
+  header p { margin: 4px 0 0; color: var(--tinta-2); font-size: 13px; }
+  .filtros { background: var(--papel); border: 1px solid var(--linha); border-radius: 8px; padding: 12px;
+    display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; }
+  .filtros label { display: grid; gap: 3px; font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--tinta-2); min-width: 0; }
+  .filtros select { font: inherit; font-size: 14px; font-weight: 400; letter-spacing: 0; color: var(--tinta);
+    background: var(--papel); border: 1px solid var(--linha); border-radius: 6px; padding: 6px 8px; max-width: 230px; }
+  .filtros select:focus-visible, .periodos button:focus-visible { outline: 2px solid var(--acento); outline-offset: 1px; }
+  .periodos { display: flex; flex-wrap: wrap; gap: 4px; }
+  .periodos button { font: inherit; font-size: 12px; border: 1px solid var(--linha); background: var(--papel); color: var(--tinta-2);
+    border-radius: 999px; padding: 4px 9px; cursor: pointer; }
+  .periodos button[aria-pressed="true"] { background: var(--cabecalho); border-color: #e9b99c; color: var(--tinta); font-weight: 700; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 10px; }
+  .kpi { background: var(--papel); border: 1px solid var(--linha); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+  .kpi span { font-size: 12px; color: var(--tinta-2); }
+  .kpi strong { display: block; font-size: 22px; margin-top: 2px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .kpi small { font-size: 12px; font-variant-numeric: tabular-nums; }
+  .kpi small.bom { color: var(--bom); } .kpi small.ruim { color: var(--ruim); }
+  .grade { background: var(--papel); border: 1px solid var(--linha); border-radius: 8px; overflow: auto; max-height: 78vh; min-width: 0; }
+  table.dre { border-collapse: separate; border-spacing: 0; font-size: 13px; white-space: nowrap; }
+  .dre th { background: var(--cabecalho); color: #000; padding: 4px 8px; position: sticky; top: 0; z-index: 2; text-align: center; font-weight: 700; }
+  .dre tr.h2 th { top: 25px; }
+  .dre th.d, .dre td.d { position: sticky; left: 0; z-index: 1; text-align: left; }
+  .dre th.d { z-index: 3; }
+  .dre td { padding: 2px 8px; text-align: right; background: var(--papel); color: #000; font-variant-numeric: tabular-nums; border-bottom: 1px solid #f0efeb; }
+  .dre .cod { color: var(--tinta-2); font-weight: 400; }
+  .dre tr.g td { font-weight: 700; }
+  .dre tr.s td { font-weight: 700; background: var(--subtotal); border-top: 1px solid var(--borda); }
+  .dre td.neg { color: var(--negativo); }
+  .dre td.pct { color: var(--percentual); }
+  .dre .sep { border-left: 1px solid var(--borda); }
+  footer { font-size: 12px; color: var(--tinta-2); }
+  @media (max-width: 600px) { .filtros select { max-width: 100%; } .filtros label { flex: 1 1 140px; } }
+</style>
+
+<div class="app">
+  <header>
+    <h1>DRE Gerencial 2026</h1>
+    <p id="fonte"></p>
+  </header>
+  <section class="filtros" aria-label="Filtros">
+    <div id="campos" style="display:contents"></div>
+    <label>MÊS DE CORTE<select id="corte"></select></label>
+    <label style="flex:1 1 100%">PERÍODOS<div class="periodos" id="periodos" role="group" aria-label="Períodos"></div></label>
+  </section>
+  <section class="kpis" id="kpis" aria-label="Indicadores"></section>
+  <div class="grade"><table class="dre" id="tabela"></table></div>
+  <footer id="rodape"></footer>
+</div>
+
+<script>
+const D = /*DADOS*/null;
+
+// ---- cálculo (mesmas regras de dre.py) ----
+const CALC = (() => {
+  const zeros = () => new Array(12).fill(0);
+  const igual = (a, b) => a.toLocaleLowerCase('pt-BR') === b.toLocaleLowerCase('pt-BR');
+  function calcular(D, sel) {           // sel: índice da opção por filtro, -1 = TODOS
+    const dono = sel[1] < 0 ? D.todos : D.filtros[1].opcoes[sel[1]];
+    const donoOk = (l) => D.regrasDono[l].some((d) => igual(d, dono));
+    const porCen = [new Map(), new Map()];
+    for (const f of D.fatos) {
+      if (sel.some((s, i) => s >= 0 && f[3 + i] !== s)) continue;
+      const m = porCen[f[0]];
+      if (!m.has(f[1])) m.set(f[1], zeros());
+      m.get(f[1])[f[2] - 1] += f[7];
+    }
+    const E = D.estrutura;
+    const montar = (contas) => {
+      const v = {};
+      E.forEach(([l, t, , , cod]) => { if (t === 'Conta') v[l] = (contas.get(cod) || zeros()).slice(); });
+      E.forEach(([l, t, n], i) => {
+        if (t !== 'Grupo') return;
+        const tot = zeros();
+        for (let j = i + 1; j < E.length && E[j][2] > n && E[j][1] !== 'Subtotal'; j++)
+          if (E[j][1] === 'Conta') v[E[j][0]].forEach((x, k) => tot[k] += x);
+        v[l] = tot;
+      });
+      for (const l of Object.keys(D.regrasDono)) if (!(l in D.subtotais) && l in v && !donoOk(l)) v[l] = zeros();
+      for (const l of Object.keys(D.subtotais).map(Number).sort((a, b) => a - b)) {
+        const tot = zeros();
+        for (const x of D.subtotais[l]) (v[x] || zeros()).forEach((y, k) => tot[k] += y);
+        v[l] = (l in D.regrasDono && !donoOk(l)) ? zeros() : tot;
+      }
+      return v;
+    };
+    const emBranco = new Set(D.emBranco.filter((l) => !donoOk(l)));
+    return { r26: montar(porCen[0]), r25: montar(porCen[1]), emBranco };
+  }
+  const soma = (a, i0, i1) => a.slice(i0, i1).reduce((s, x) => s + x, 0);
+  function periodo(D, a26, a25, nome, corte) {
+    const i = D.meses.indexOf(nome);
+    if (i >= 0) return [a26[i], a25[i]];
+    if (nome in D.trimestres) { const m = D.trimestres[nome]; return [soma(a26, m[0] - 1, m[2]), soma(a25, m[0] - 1, m[2])]; }
+    if (nome === 'ACUMULADO') return [soma(a26, 0, corte - 1), soma(a25, 0, corte - 1)];
+    if (nome === 'TOTAL') return [soma(a26, 0, corte - 1) + soma(a25, corte - 1, 12), soma(a25, 0, 12)];
+    throw new Error(nome);
+  }
+  const linhaBase = (D, l) => { let b = D.basesPercentual[0][1]; for (const [de, x] of D.basesPercentual) if (l >= de) b = x; return b; };
+  const div = (a, b) => (b ? a / b : 0);
+  function celulas(D, res, l, natureza, nome, corte) {
+    const [v26, v25] = periodo(D, res.r26[l], res.r25[l], nome, corte);
+    const b = linhaBase(D, l);
+    const [b26, b25] = periodo(D, res.r26[b], res.r25[b], nome, corte);
+    const delta = (v26 - v25) * (D.sinais[natureza] ?? 0);
+    return { r26: v26, p26: div(v26, b26), r25: v25, p25: div(v25, b25), delta, pdelta: div(delta, Math.abs(v25)) };
+  }
+  return { calcular, periodo, celulas, div };
+})();
+// ---- fim do cálculo ----
+
+if (typeof document !== 'undefined') {
+  const num = (x) => { const r = Math.round(x) + 0; return r.toLocaleString('pt-BR'); };
+  const pct = (x) => (x * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  const sel = D.filtros.map(() => -1);
+  let corte = D.corte;
+  let periodos = D.periodosPadrao.slice();
+
+  document.getElementById('fonte').textContent =
+    `Fonte: ${D.arquivo} · ${D.lancamentos.toLocaleString('pt-BR')} lançamentos Real 2026 e Real 2025 · retrato do dia da geração`;
+
+  const campos = document.getElementById('campos');
+  D.filtros.forEach((f, i) => {
+    const opts = f.opcoes.map((o, j) => [o, j]).filter(([o]) => o !== '')
+      .sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'));
+    const id = 'filtro-' + i;
+    campos.insertAdjacentHTML('beforeend',
+      `<label for="${id}">${esc(f.rotulo)}<select id="${id}"><option value="-1">${esc(D.todos)}</option>` +
+      opts.map(([o, j]) => `<option value="${j}">${esc(o)}</option>`).join('') + '</select></label>');
+    document.getElementById(id).addEventListener('change', (e) => { sel[i] = Number(e.target.value); render(); });
+  });
+
+  const selCorte = document.getElementById('corte');
+  for (let m = 1; m <= 13; m++) selCorte.add(new Option(m <= 12 ? D.meses[m - 1][0] + D.meses[m - 1].slice(1).toLowerCase() : 'Ano todo', m));
+  selCorte.value = corte;
+  selCorte.addEventListener('change', () => { corte = Number(selCorte.value); render(); });
+
+  const caixaPer = document.getElementById('periodos');
+  D.periodos.forEach((p) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = p; b.setAttribute('aria-pressed', periodos.includes(p));
+    b.addEventListener('click', () => {
+      periodos = periodos.includes(p) ? periodos.filter((x) => x !== p) : D.periodos.filter((x) => x === p || periodos.includes(x));
+      b.setAttribute('aria-pressed', periodos.includes(p)); render();
+    });
+    caixaPer.appendChild(b);
+  });
+
+  function render() {
+    const res = CALC.calcular(D, sel);
+    const pk = periodos.length ? periodos[periodos.length - 1] : 'ACUMULADO';
+    document.getElementById('kpis').innerHTML = D.kpis.map(([rot, l]) => {
+      const [v26, v25] = CALC.periodo(D, res.r26[l], res.r25[l], pk, corte);
+      const d = CALC.div(v26 - v25, Math.abs(v25));
+      return `<div class="kpi"><span>${esc(rot)} · ${esc(pk)}</span><strong>${num(v26)}</strong>` +
+        `<small class="${d > 0 ? 'bom' : d < 0 ? 'ruim' : ''}">${d > 0 ? '▲' : d < 0 ? '▼' : '•'} ${pct(d)} vs 2025</small></div>`;
+    }).join('');
+
+    const h1 = '<tr><th class="d">DRE - GERENCIAL</th>' + periodos.map((p) => `<th colspan="6" class="sep">${esc(p)}</th>`).join('') + '</tr>';
+    const h2 = '<tr class="h2"><th class="d"></th>' + periodos.map((p) =>
+      `<th class="sep">${p === 'TOTAL' ? 'R26+R25' : 'R 2026'}</th><th>%</th><th>R 2025</th><th>%</th><th>Δ 25</th><th>% 25</th>`).join('') + '</tr>';
+    const corpo = D.estrutura.map(([l, t, n, nat, cod, desc]) => {
+      const cls = t === 'Subtotal' ? 's' : t === 'Grupo' ? 'g' : '';
+      const recuo = '&nbsp;'.repeat(3 * Math.max(n - 1, 0));
+      let tds = `<td class="d"><span class="cod">${esc(cod)}</span>${cod ? '&nbsp;&nbsp;' : ''}${recuo}${esc(desc)}</td>`;
+      for (const p of periodos) {
+        if (res.emBranco.has(l)) { tds += '<td class="sep"></td>' + '<td></td>'.repeat(5); continue; }
+        const c = CALC.celulas(D, res, l, nat, p, corte);
+        [[c.r26, c.p26], [c.r25, c.p25], [c.delta, c.pdelta]].forEach(([v, q], i) => {
+          tds += `<td class="${Math.round(v) < 0 ? 'neg' : ''}${i === 0 ? ' sep' : ''}">${num(v)}</td><td class="pct">${pct(q)}</td>`;
+        });
+      }
+      return `<tr class="${cls}">${tds}</tr>`;
+    }).join('');
+    document.getElementById('tabela').innerHTML = periodos.length
+      ? h1 + h2 + corpo
+      : '<tr><td style="padding:24px;text-align:left">Escolha ao menos um período acima.</td></tr>';
+  }
+
+  document.getElementById('rodape').textContent =
+    'Mesmas regras do painel Streamlit (dre_streamlit/config.py). R 2026 e R 2025 conferem com a planilha até o centavo com filtros TODOS.';
+  render();
+}
+</script>

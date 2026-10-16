@@ -32,6 +32,7 @@ A primeira leitura da BASE (~350 mil linhas) leva cerca de 1 minuto; o resultado
 | `leitura.py` | leitura do `.xlsb` (pyxlsb) e cache em parquet |
 | `dre.py` | cálculo: contas → grupos → regras de Dono → subtotais; períodos; %, Δ e %Δ |
 | `abrir_painel.bat` | atalho do Windows: confere Python e planilha, instala o que faltar e abre o painel |
+| `gerar_html.py` + `pagina_modelo.html` | gera uma página única com os dados embutidos (`python gerar_html.py saida.html`), para abrir sem instalar nada; a saída tem os dados da empresa, não publique |
 | `app.py` | interface (filtros EMPRESA, DONO, C.CUSTO, DESP. NÃO OP; mês de corte; períodos) |
 | `tests/test_conciliacao.py` | concilia o painel com a aba da DRE (filtros TODOS) |
 
