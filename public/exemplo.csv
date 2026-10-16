@@ -1,0 +1,91 @@
+data;descricao;categoria;tipo;valor;status
+13/01/2026;Venda de produtos;Vendas;receita;52295,52;pago
+15/01/2026;Prestação de serviços;Serviços;receita;17551,63;pago
+03/01/2026;Folha de pagamento;Pessoal;despesa;19231,91;pago
+04/01/2026;Aluguel do escritório;Ocupação;despesa;4500,00;pago
+02/01/2026;Fornecedores;Custo dos produtos;despesa;21277,63;pago
+07/01/2026;Google Ads;Marketing;despesa;2149,98;pago
+14/01/2026;Impostos sobre vendas;Impostos;despesa;6254,52;pago
+08/01/2026;Software e assinaturas;Tecnologia;despesa;1254,43;pago
+14/01/2026;Energia e internet;Ocupação;despesa;723,64;pago
+21/02/2026;Venda de produtos;Vendas;receita;41322,56;pago
+10/02/2026;Prestação de serviços;Serviços;receita;17726,81;pago
+19/02/2026;Folha de pagamento;Pessoal;despesa;19421,56;pago
+19/02/2026;Aluguel do escritório;Ocupação;despesa;4500,00;pago
+02/02/2026;Fornecedores;Custo dos produtos;despesa;21810,04;pago
+02/02/2026;Google Ads;Marketing;despesa;4226,66;pago
+05/02/2026;Impostos sobre vendas;Impostos;despesa;5868,83;pago
+05/02/2026;Software e assinaturas;Tecnologia;despesa;1524,41;pago
+19/02/2026;Energia e internet;Ocupação;despesa;823,39;pago
+24/03/2026;Venda de produtos;Vendas;receita;42961,98;pago
+21/03/2026;Prestação de serviços;Serviços;receita;17563,81;pago
+07/03/2026;Folha de pagamento;Pessoal;despesa;18558,60;pago
+18/03/2026;Aluguel do escritório;Ocupação;despesa;4500,00;pago
+19/03/2026;Fornecedores;Custo dos produtos;despesa;14476,81;pago
+07/03/2026;Google Ads;Marketing;despesa;3985,66;pago
+18/03/2026;Impostos sobre vendas;Impostos;despesa;6282,78;pago
+11/03/2026;Software e assinaturas;Tecnologia;despesa;1479,36;pago
+15/03/2026;Energia e internet;Ocupação;despesa;844,63;pago
+10/04/2026;Venda de produtos;Vendas;receita;53051,02;pago
+25/04/2026;Prestação de serviços;Serviços;receita;19697,73;pago
+03/04/2026;Folha de pagamento;Pessoal;despesa;18861,64;pago
+17/04/2026;Aluguel do escritório;Ocupação;despesa;4500,00;pago
+11/04/2026;Fornecedores;Custo dos produtos;despesa;19835,56;pago
+10/04/2026;Google Ads;Marketing;despesa;4435,84;pago
+03/04/2026;Impostos sobre vendas;Impostos;despesa;5354,20;pago
+14/04/2026;Software e assinaturas;Tecnologia;despesa;1298,98;pago
+11/04/2026;Energia e internet;Ocupação;despesa;760,79;pago
+18/05/2026;Venda de produtos;Vendas;receita;48294,15;pago
+24/05/2026;Prestação de serviços;Serviços;receita;13883,06;pago
+18/05/2026;Folha de pagamento;Pessoal;despesa;18859,54;pago
+27/05/2026;Aluguel do escritório;Ocupação;despesa;4500,00;pago
+23/05/2026;Fornecedores;Custo dos produtos;despesa;16801,43;pago
+16/05/2026;Google Ads;Marketing;despesa;4319,58;pago
+15/05/2026;Impostos sobre vendas;Impostos;despesa;5206,29;pago
+03/05/2026;Software e assinaturas;Tecnologia;despesa;1766,81;pago
+16/05/2026;Energia e internet;Ocupação;despesa;978,82;pago
+05/06/2026;Venda de produtos;Vendas;receita;43511,30;pago
+25/06/2026;Prestação de serviços;Serviços;receita;16214,08;pago
+19/06/2026;Folha de pagamento;Pessoal;despesa;19489,64;pago
+27/06/2026;Aluguel do escritório;Ocupação;despesa;4500,00;pago
+23/06/2026;Fornecedores;Custo dos produtos;despesa;17086,33;pago
+22/06/2026;Google Ads;Marketing;despesa;3388,02;pago
+15/06/2026;Impostos sobre vendas;Impostos;despesa;6066,39;pago
+20/06/2026;Software e assinaturas;Tecnologia;despesa;1270,26;pago
+02/06/2026;Energia e internet;Ocupação;despesa;787,28;pago
+12/07/2026;Venda de produtos;Vendas;receita;45384,27;pago
+10/07/2026;Prestação de serviços;Serviços;receita;17308,83;pago
+28/07/2026;Folha de pagamento;Pessoal;despesa;18744,76;pago
+06/07/2026;Aluguel do escritório;Ocupação;despesa;4500,00;pago
+18/07/2026;Fornecedores;Custo dos produtos;despesa;16222,71;pago
+05/07/2026;Google Ads;Marketing;despesa;5277,12;pago
+28/07/2026;Impostos sobre vendas;Impostos;despesa;6650,66;pago
+23/07/2026;Software e assinaturas;Tecnologia;despesa;1449,18;pago
+12/07/2026;Energia e internet;Ocupação;despesa;973,09;pago
+15/08/2026;Venda de produtos;Vendas;receita;59633,55;pago
+07/08/2026;Prestação de serviços;Serviços;receita;14690,10;pago
+05/08/2026;Folha de pagamento;Pessoal;despesa;18347,94;pago
+08/08/2026;Aluguel do escritório;Ocupação;despesa;4500,00;pago
+27/08/2026;Fornecedores;Custo dos produtos;despesa;18712,99;pago
+09/08/2026;Google Ads;Marketing;despesa;3127,72;pago
+05/08/2026;Impostos sobre vendas;Impostos;despesa;6256,84;pago
+12/08/2026;Software e assinaturas;Tecnologia;despesa;1565,89;pago
+11/08/2026;Energia e internet;Ocupação;despesa;1081,24;pago
+25/09/2026;Venda de produtos;Vendas;receita;59034,02;pago
+22/09/2026;Prestação de serviços;Serviços;receita;20342,88;pago
+24/09/2026;Folha de pagamento;Pessoal;despesa;18080,99;pago
+28/09/2026;Aluguel do escritório;Ocupação;despesa;4500,00;pago
+28/09/2026;Fornecedores;Custo dos produtos;despesa;19444,60;pago
+18/09/2026;Google Ads;Marketing;despesa;3569,52;pago
+13/09/2026;Impostos sobre vendas;Impostos;despesa;6182,36;pago
+16/09/2026;Software e assinaturas;Tecnologia;despesa;1580,57;pago
+02/09/2026;Energia e internet;Ocupação;despesa;776,24;pago
+09/10/2026;Venda de produtos;Vendas;receita;53002,53;pendente
+22/10/2026;Prestação de serviços;Serviços;receita;14904,73;pendente
+05/10/2026;Folha de pagamento;Pessoal;despesa;18804,93;pago
+20/10/2026;Aluguel do escritório;Ocupação;despesa;4500,00;pago
+20/10/2026;Fornecedores;Custo dos produtos;despesa;17009,83;pago
+12/10/2026;Google Ads;Marketing;despesa;4409,12;pendente
+04/10/2026;Impostos sobre vendas;Impostos;despesa;7546,81;pago
+15/10/2026;Software e assinaturas;Tecnologia;despesa;1488,24;pendente
+05/10/2026;Energia e internet;Ocupação;despesa;740,88;pendente
